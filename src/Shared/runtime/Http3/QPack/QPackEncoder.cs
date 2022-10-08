@@ -100,7 +100,10 @@ namespace System.Net.Http.QPack
 
         public static byte[] EncodeLiteralHeaderFieldWithStaticNameReferenceToArray(int index, string value)
         {
-            Span<byte> temp = value.Length < 256 ? stackalloc byte[256 + IntegerEncoder.MaxInt32EncodedLength * 2] : new byte[value.Length + IntegerEncoder.MaxInt32EncodedLength * 2];
+            const int StackAllocThreshold = 256;
+            Span<byte> temp = value.Length <= StackAllocThreshold - IntegerEncoder.MaxInt32EncodedLength * 2
+                ? stackalloc byte[StackAllocThreshold]
+                : new byte[value.Length + IntegerEncoder.MaxInt32EncodedLength * 2];
             bool res = EncodeLiteralHeaderFieldWithStaticNameReference(index, value, temp, out int bytesWritten);
             Debug.Assert(res);
             return temp.Slice(0, bytesWritten).ToArray();
